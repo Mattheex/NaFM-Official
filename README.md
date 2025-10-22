@@ -48,7 +48,7 @@ We provide automated scripts to download and organize all required data:
 python setup.py
 ```
 
-**Manual Setup:**
+**Seperate Setup:**
 ```bash
 # Download all data and weights
 python scripts/setup_data.py
@@ -101,7 +101,6 @@ This will check:
 - All dependencies
 - Data file integrity  
 - Model loading capability
-- Platform-specific issues
 
 ## Scripts Directory
 
