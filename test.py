@@ -1,4 +1,5 @@
 import argparse
+import json
 
 import numpy as np
 import torch
@@ -27,7 +28,7 @@ def get_args():
         default='Ontology',
         type=str,
         help="Finetuned Dataset name",
-        choices=['Lotus', 'Ontology', 'Regression', 'External', 'BGC'],
+        choices=['Lotus', 'Ontology', 'Regression', 'External', 'BGC','ClassyFire'],
     )
 
     parser.add_argument(
@@ -48,7 +49,14 @@ def get_args():
         "--checkpoint",
         default=None,
         type=str,
-        help="checkpoint storage directory",
+        help="checkpoint filename",
+    )
+
+    parser.add_argument(
+        "--val-fold",
+        type=int,
+        default=0,
+        help="Fold used as validation/test set for External dataset (same value as used during training)",
     )
 
     args = parser.parse_args()
@@ -73,14 +81,25 @@ def main():
         
     elif args.dataset == 'BGC':
         dataset = BGC(root=args.dataset_root)
-    
+    elif args.dataset == 'ClassyFire':
+        dataset = Classyfire(root=args.dataset_root,dataset_arg=args.dataset_arg)
     else:
         raise ValueError('Dataset not found')
 
-    splits = np.load(f'{args.log_dir}/splits.npz')
     checkpoint_path = f'{args.log_dir}/{args.checkpoint}'
-    
-    test_set = Subset(dataset, splits.f.idx_test)
+
+    if args.dataset == 'External':
+        # External uses pre-defined folds; treat the val fold as the test set
+        val_fold = args.val_fold
+        if val_fold == -1:
+            idx_test = np.arange(len(dataset))
+        else:
+            idx_test = np.where(dataset.data.fold.numpy() == val_fold)[0]
+    else:
+        splits = np.load(f'{args.log_dir}/splits.npz')
+        idx_test = splits.f.idx_test
+
+    test_set = Subset(dataset, idx_test)
     test_loader = DataLoader(test_set, batch_size=256, shuffle=False)
     if args.dataset != 'Regression':
         model = FinetunedLNNP.load_from_checkpoint(
@@ -146,11 +165,17 @@ def main():
         binarized_labels = label_binarize(
             all_labels, classes=[i for i in range(n_classes)])
         auprc, count = np.zeros(n_classes), 0
+
+        if args.dataset == 'ClassyFire':
+            with open(f'{args.dataset_root}/id_to_name.json') as f:
+                id_to_name = dict(json.load(f))
         for i in range(n_classes):
             # Only compute AUC for valid classes
             if len(np.unique(binarized_labels[:, i])) > 1:
                 auprc[i] = average_precision_score(binarized_labels[:, i],
                                                    all_outputs[:, i])
+                if args.dataset == 'ClassyFire':
+                    print(f'  Label {id_to_name[str(i)]}: AUPRC = {auprc[i]:.6f}')
                 count += 1
         auprc = np.sum(auprc) / count
         recall = recall_score(all_labels,

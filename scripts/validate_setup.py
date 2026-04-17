@@ -33,7 +33,7 @@ def check_dependencies():
     
     required_packages = [
         'torch', 'pytorch_lightning', 'torch_geometric', 'rdkit', 
-        'numpy', 'pandas', 'scikit-learn', 'networkx', 'scipy',
+        'numpy', 'pandas', 'sklearn', 'networkx', 'scipy',
         'tqdm', 'tensorboard', 'torchmetrics'
     ]
     
@@ -133,6 +133,7 @@ def run_basic_tests():
     print("\nRunning basic tests...")
     
     try:
+        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
         # Test basic imports
         from gnn.data import PretrainedDataModule, FinetunedDataModule
         from gnn.pre_module import LNNP as PretrainedLNNP

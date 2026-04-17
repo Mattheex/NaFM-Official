@@ -245,3 +245,25 @@ class FinetunedDataModule(LightningDataModule):
         )
 
         return idx_train, idx_val, idx_test
+
+    def _prepare_ClassyFire_dataset(self):
+        self.dataset = Classyfire(
+            root=self.hparams["dataset_root"], dataset_arg=self.hparams["dataset_arg"]
+        )
+        train_size = self.hparams["train_size"]
+        val_size = self.hparams["val_size"]
+        test_size = self.hparams["test_size"]
+
+        idx_train, idx_val, idx_test = make_stratified_splits(
+            self.dataset,
+            train_size,
+            val_size,
+            test_size,
+            self.hparams["confine_training"],
+            self.hparams["num_train_samples"],
+            self.hparams["seed"],
+            join(self.hparams["log_dir"], "splits.npz"),
+            self.hparams["splits"],
+        )
+
+        return idx_train, idx_val, idx_test

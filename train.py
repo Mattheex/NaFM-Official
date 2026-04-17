@@ -56,7 +56,7 @@ def get_args():
         default=None, 
         type=str, 
         help="Finetuned Dataset name",
-        choices=['Lotus','Ontology','Regression', 'External','BGC'],
+        choices=['Lotus','Ontology','Regression', 'External','BGC','ClassyFire'],
     )
     
     parser.add_argument(
@@ -233,6 +233,12 @@ def get_args():
         choices=["pretrain", "finetune", "ecfp"],
         help="Task to train",
     )
+    parser.add_argument(
+        "--ckpt-path",
+        type=str,
+        default=None,
+        help="Path to checkpoint to resume training from",
+    )
     args = parser.parse_args()
 
     if args.inference_batch_size is None:
@@ -254,7 +260,7 @@ def main():
     # initialize lightning module
     num_classes = data.dataset.num_class if args.dataset != "Regression" and args.task != "pretrain" else 1
     model = FinetunedLNNP(args, num_classes) if args.task != "pretrain" else PretrainedLNNP(args)
-    monitor = "val_auprc" if (args.dataset == "Ontology" or args.dataset == "BGC") else "val_loss"
+    monitor = "val_auprc" if (args.dataset == "Ontology" or args.dataset == "BGC" or args.dataset == "ClassyFire") else "val_loss"
     checkpoint_callback = ModelCheckpoint(
         dirpath=args.log_dir,
         monitor=monitor,
@@ -310,7 +316,7 @@ def main():
     # instantiate the Trainer with your assembled kwargs
     trainer = pl.Trainer(**trainer_kwargs)
 
-    trainer.fit(model, datamodule=data)
+    trainer.fit(model, datamodule=data,ckpt_path=args.ckpt_path)
 
 if __name__ == "__main__":
     main()
