@@ -18,6 +18,7 @@ TARGET_MAP = {
 
 # The folds you ran in your bash script
 FOLD_IDS = [1, 2, 3, 4] 
+SEED_IDS = [0,1,2]
 DATASET_NAME = "External"
 
 def extract_averaged_metrics():
@@ -34,29 +35,35 @@ def extract_averaged_metrics():
 
     for target_id, target_name in TARGET_MAP.items():
         fold_ef1, fold_ef5, fold_ef10 = [], [], []
-        
-        for fold in FOLD_IDS:
-            # Matches folder: ./log-External_204_1
-            folder_path = f"log-{DATASET_NAME}_{target_id}_{fold}"
-            
-            # Find the metrics.csv file (PyTorch Lightning often nests this in version_X)
-            csv_files = glob.glob(os.path.join(folder_path, "**/metrics.csv"), recursive=True)
-            
-            if not csv_files:
-                print(f"[!] Missing data for {target_name} (ID: {target_id}), Fold: {fold}")
-                continue
-            
-            try:
-                # Read the latest CSV file found
-                df = pd.read_csv(csv_files[-1])
+
+        for seed in SEED_IDS:
+            for fold in FOLD_IDS:
+                # Matches folder: ./log-External_204_1
                 
-                # Get the last recorded values for EFs (usually end of training)
-                # We dropna to ensure we get rows where metrics were actually logged
-                fold_ef1.append(df['ef1'].dropna().iloc[-1])
-                fold_ef5.append(df['ef5'].dropna().iloc[-1])
-                fold_ef10.append(df['ef10'].dropna().iloc[-1])
-            except Exception as e:
-                print(f"[!] Error reading {csv_files[0]}: {e}")
+                if seed == 1:
+                    seed_path = ''
+                else:
+                    seed_path = f"_{seed}"
+                folder_path = f"log-{DATASET_NAME}_{target_id}_{fold}{seed_path}"
+                
+                # Find the metrics.csv file (PyTorch Lightning often nests this in version_X)
+                csv_files = glob.glob(os.path.join(folder_path, "**/metrics.csv"), recursive=True)
+                
+                if not csv_files:
+                    print(f"[!] Missing data for {target_name} (ID: {target_id}), Fold: {fold}, Seed: {seed}")
+                    continue
+                
+                try:
+                    # Read the latest CSV file found
+                    df = pd.read_csv(csv_files[-1])
+                    
+                    # Get the last recorded values for EFs (usually end of training)
+                    # We dropna to ensure we get rows where metrics were actually logged
+                    fold_ef1.append(df['ef1'].dropna().iloc[-1])
+                    fold_ef5.append(df['ef5'].dropna().iloc[-1])
+                    fold_ef10.append(df['ef10'].dropna().iloc[-1])
+                except Exception as e:
+                    print(f"[!] Error reading {csv_files[0]}: {e}")
 
         # Calculate means for this target across all successful folds
         final_data["targets"].append(target_name)
