@@ -360,3 +360,8 @@ documents
 ckpts
 .vscode
 log*
+coconut_csv-04-2026.csv
+scripts/to.md
+*.txt
+raw_data/raw/*.pkl
+figures/*.csv

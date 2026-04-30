@@ -40,10 +40,7 @@ def extract_averaged_metrics():
             for fold in FOLD_IDS:
                 # Matches folder: ./log-External_204_1
                 
-                if seed == 1:
-                    seed_path = ''
-                else:
-                    seed_path = f"_{seed}"
+                seed_path = f"_{seed}"
                 folder_path = f"log-{DATASET_NAME}_{target_id}_{fold}{seed_path}"
                 
                 # Find the metrics.csv file (PyTorch Lightning often nests this in version_X)

@@ -2,7 +2,7 @@
 
 DATASET="External"
 DATASET_ROOT="./downstream_data/External"
-SAVE_INTERVAL=15
+SAVE_INTERVAL=30
 
 for SEED in 0 1 2; do
     for DATASET_ARG in 204 178 109 30 570 668 208; do
@@ -29,7 +29,9 @@ for SEED in 0 1 2; do
                 --dataset-root  "${DATASET_ROOT}" \
                 --save-interval "${SAVE_INTERVAL}" \
                 --val-fold      "${FOLD}" \
-                --seed          "${SEED}"
+                --seed          "${SEED}" \
+                --lr             1.e-5 \
+                --lr-min        1.e-6
 
             EXIT_CODE=$?
             if [ $EXIT_CODE -ne 0 ]; then
